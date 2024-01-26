@@ -1,20 +1,98 @@
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import {
+  Pressable,
+  StyleSheet,
+  SafeAreaView,
+  TextInput,
+  View,
+} from "react-native";
+import { Feather } from "@expo/vector-icons";
+
+import Voice, { type SpeechResultsEvent } from "@react-native-voice/voice";
+import { useEffect, useState } from "react";
 
 export default function App() {
+  const [search, setSearch] = useState("");
+  const [isListening, setIsListening] = useState(false);
+  function onSpeechResults({ value }: SpeechResultsEvent) {
+    try {
+      console.log(value);
+
+      const text = value ?? [];
+
+      setSearch(text.join().replace(",", " "));
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  async function handleListening() {
+    try {
+      if (isListening) {
+        await Voice.stop();
+        setIsListening(false);
+      } else {
+        setSearch("");
+        await Voice.start("pt-BR");
+        setIsListening(true);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  useEffect(() => {
+    Voice.onSpeechResults = onSpeechResults;
+  }, []);
+
   return (
-    <View style={styles.container}>
-      <Text>Open up App.tsx to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
+    <SafeAreaView>
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <TextInput
+            value={search}
+            style={styles.input}
+            onChangeText={setSearch}
+            placeholder="Pesquisar..."
+          />
+          <Pressable onPress={handleListening} style={styles.button}>
+            <Feather
+              name={isListening ? "pause" : "mic"}
+              color="#fff"
+              size={24}
+            />
+          </Pressable>
+        </View>
+      </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
+    paddingHorizontal: 32,
+    paddingVertical: 52,
+  },
+  header: {
+    width: "100%",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  input: {
+    flex: 1,
+    height: 54,
+    padding: 16,
+    fontSize: 16,
+    borderRadius: 12,
+    backgroundColor: "#D9E6EB",
+  },
+  button: {
+    height: 54,
+    width: 54,
+    borderRadius: 12,
+    backgroundColor: "#6F4AE5",
+    justifyContent: "center",
+    alignItems: "center",
   },
 });
